@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的模板 · Algorithm Hub</title>
+    <link rel="stylesheet" href="/css/my-boards.css">
+    <style>
+        /* =========================
+           模板列表分页样式
+           （内联在本文件，未修改 index.css；
+             后续后端分页时样式可继续复用）
+        ========================= */
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 26px;
+        }
+
+        .page-btn {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 13px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-soft);
+            font-size: 13px;
+            font-weight: 700;
+            transition: .18s ease;
+        }
+
+        .page-btn:hover:not(:disabled):not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 7px 17px rgba(98, 88, 243, .2);
+        }
+
+        .page-btn:disabled {
+            opacity: .38;
+            cursor: not-allowed;
+        }
+
+        .page-ellipsis {
+            padding: 0 2px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .page-info {
+            margin-left: 6px;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<header class="site-header">
+    <div class="container navbar">
+        <a class="brand" href="/">
+            <span class="brand-symbol"><span>A</span></span>
+            <span>Algorithm Hub</span>
+        </a>
+
+        <nav class="main-nav">
+            <a class="nav-link" href="/">模板库</a>
+            <a class="nav-link active" href="/html/my-boards.html">我的模板</a>
+        </nav>
+
+        <div class="nav-actions">
+            <button class="btn secondary" id="logoutBtn">
+                退出登录
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="container page">
+    <section class="page-heading">
+        <div>
+            <span class="eyebrow">Personal workspace</span>
+            <h1>我的模板</h1>
+            <p>管理自己创建的模板，以及从公共模板库添加的模板。</p>
+        </div>
+
+        <div class="page-actions">
+            <button class="btn secondary" id="openExportBtn">导出 PDF</button>
+            <button class="btn" id="newTemplateBtn">＋ 新建模板</button>
+        </div>
+    </section>
+
+    <section class="overview">
+        <div class="overview-card">
+            <div class="overview-label">我的模板</div>
+            <div class="overview-number" id="totalCount">—</div>
+            <div class="overview-detail">个人模板库中的模板</div>
+        </div>
+
+        <div class="overview-card">
+            <div class="overview-label">分类数量</div>
+            <div class="overview-number" id="categoryCount">—</div>
+            <div class="overview-detail">模板涉及的不同分类</div>
+        </div>
+
+        <div class="overview-card">
+            <div class="overview-label">使用语言</div>
+            <div class="overview-number" id="languageCount">—</div>
+            <div class="overview-detail">模板使用的编程语言</div>
+        </div>
+
+        <div class="overview-card">
+            <div class="overview-label">当前显示</div>
+            <div class="overview-number" id="visibleCount">—</div>
+            <div class="overview-detail">符合当前搜索和筛选条件</div>
+        </div>
+    </section>
+
+    <section class="category-panel">
+        <span class="panel-label">快速分类</span>
+
+        <div class="category-list" id="categoryList">
+            <!-- 由脚本根据 10 大分类自动生成“全部模板 + 10 类”按钮 -->
+        </div>
+
+        <p class="category-note">
+            快速分类支持主分类和子分类写法，例如“图论 / 最短路”也会归入“图论”，旧分类“数论”会归入“数学与数论”。
+        </p>
+    </section>
+
+    <section class="toolbar">
+        <div class="filter-search">
+            <svg viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="m20 20-4-4"></path>
+            </svg>
+
+            <input id="searchInput"
+                   type="search"
+                   placeholder="搜索模板名称、简介、分类、语言、难度或代码">
+        </div>
+
+        <select id="categoryFilter">
+            <option value="">全部分类</option>
+        </select>
+
+        <select id="languageFilter">
+            <option value="">全部语言</option>
+            <option value="C++">C++</option>
+            <option value="Java">Java</option>
+            <option value="Python">Python</option>
+            <option value="Go">Go</option>
+            <option value="PHP">PHP</option>
+            <option value="C">C</option>
+            <option value="Rust">Rust</option>
+        </select>
+
+        <select id="sortFilter">
+            <option value="newest">最新模板</option>
+            <option value="title">按名称排序</option>
+            <option value="difficulty">按难度排序</option>
+        </select>
+
+        <button class="reset-filter" id="resetFilter">
+            重置筛选
+        </button>
+    </section>
+
+    <div class="filter-result">
+        <span id="resultText">正在加载我的模板...</span>
+        <span>模板代码可直接查看和复制</span>
+    </div>
+
+    <section class="template-grid" id="templateGrid">
+        <div class="empty-state">
+            正在加载我的模板...
+        </div>
+    </section>
+    <nav class="pagination" id="pagination" aria-label="模板分页"></nav>
+</main>
+
+<div class="modal-layer" id="editorModal">
+    <section class="modal-card">
+        <div class="modal-header">
+            <h2 id="modalTitle">新建模板</h2>
+            <button class="modal-close" id="closeEditor">×</button>
+        </div>
+
+        <div class="form-error" id="formError"></div>
+
+        <form id="templateForm">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="title">模板名称</label>
+                    <input id="title"
+                           maxlength="200"
+                           placeholder="例如：Dijkstra 最短路"
+                           required>
+                </div>
+
+                <div class="field">
+                    <label for="category">分类</label>
+                    <select id="category" required>
+                        <option value="">请选择分类</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="difficulty">难度</label>
+                    <select id="difficulty" required>
+                        <option value="">请选择难度</option>
+                        <option value="简单">简单</option>
+                        <option value="中等">中等</option>
+                        <option value="困难">困难</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="language">编程语言</label>
+                    <select id="language" required>
+                        <option value="">请选择语言</option>
+                        <option value="C++">C++</option>
+                        <option value="Java">Java</option>
+                        <option value="Python">Python</option>
+                        <option value="Go">Go</option>
+                        <option value="PHP">PHP</option>
+                        <option value="C">C</option>
+                        <option value="Rust">Rust</option>
+                    </select>
+                </div>
+
+                <div class="field full">
+                    <label for="description">模板简介</label>
+                    <textarea id="description"
+                              maxlength="2000"
+                              placeholder="说明这个模板的用途和适用场景"
+                              required></textarea>
+                </div>
+
+                <div class="field full">
+                    <label>代码来源</label>
+
+                    <div class="source-tabs">
+                        <label>
+                            <input type="radio"
+                                   name="codeSource"
+                                   value="editor"
+                                   checked>
+                            在线编辑器
+                        </label>
+
+                        <label>
+                            <input type="radio"
+                                   name="codeSource"
+                                   value="file">
+                            上传代码文件
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field full" id="editorSource">
+                    <label for="code">模板代码</label>
+                    <textarea id="code"
+                              class="code-editor"
+                              placeholder="// 在这里输入模板代码..."></textarea>
+                </div>
+
+                <div class="field full"
+                     id="fileSource"
+                     style="display:none">
+                    <label for="codeFile">代码文件</label>
+                    <input id="codeFile"
+                           class="file-input"
+                           type="file">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn ghost"
+                        type="button"
+                        id="cancelEditor">
+                    取消
+                </button>
+
+                <button class="btn" type="submit" id="submitBtn">
+                    保存模板
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<div class="modal-layer" id="detailModal">
+    <section class="modal-card">
+        <div class="modal-header">
+            <div>
+                <div class="template-tags" id="detailTags"></div>
+                <h2 id="detailTitle" style="margin-top:13px;">
+                    模板详情
+                </h2>
+            </div>
+
+            <button class="modal-close" id="closeDetail">×</button>
+        </div>
+
+        <p class="modal-description" id="detailDescription"></p>
+
+        <pre class="detail-code" id="detailCode"></pre>
+
+        <div class="modal-footer">
+            <button class="btn secondary" id="detailCopy">
+                复制模板代码
+            </button>
+
+            <button class="btn" id="detailEdit">
+                编辑模板
+            </button>
+
+            <button class="btn danger" id="detailDelete">
+                删除模板
+            </button>
+        </div>
+    </section>
+</div>
+
+<div class="modal-layer" id="exportModal">
+    <section class="modal-card export-modal-card">
+        <div class="modal-header">
+            <div>
+                <span class="eyebrow">PDF export</span>
+                <h2>导出板子合集</h2>
+            </div>
+            <button class="modal-close" id="closeExport">×</button>
+        </div>
+
+        <p class="export-intro">
+            选择要打印的模板，确认分类顺序和版式后，即可下载 PDF。
+        </p>
+
+        <section class="export-section">
+            <div class="export-section-head">
+                <div>
+                    <h3>选择模板</h3>
+                    <p id="exportSelectionCount">已选择 0 个模板</p>
+                </div>
+                <button class="text-button" id="toggleAllExport">全选</button>
+            </div>
+            <div class="export-board-list" id="exportBoardList"></div>
+        </section>
+
+        <section class="export-section">
+            <div class="export-section-head">
+                <div>
+                    <h3>分类顺序</h3>
+                    <p>仅显示已选模板包含的分类；可使用上下按钮调整。</p>
+                </div>
+            </div>
+            <div class="export-category-order" id="exportCategoryOrder"></div>
+        </section>
+
+        <section class="export-section">
+            <div class="export-section-head">
+                <div>
+                    <h3>导出选项</h3>
+                    <p>这些选项会直接传给 PDF 生成器。</p>
+                </div>
+            </div>
+            <div class="export-options">
+                <label><input type="checkbox" id="exportCover" checked> 生成封面</label>
+                <label><input type="checkbox" id="exportToc" checked> 生成目录</label>
+                <label><input type="checkbox" id="exportBookmarks" checked> 生成 PDF 书签</label>
+                <label><input type="checkbox" id="exportNewPage"> 每个分类从新页开始</label>
+            </div>
+        </section>
+
+        <div class="modal-actions">
+            <button class="btn ghost" id="cancelExport">取消</button>
+            <button class="btn" id="submitExport">下载 PDF</button>
+        </div>
+    </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = selector => document.querySelector(selector);
+
+/* 固定 10 大分类：创建/编辑模板时只能从这 10 类中选择 */
+const BOARD_CATEGORIES = [
+    '基础算法',
+    '数据结构',
+    '图论',
+    '字符串',
+    '数学与数论',
+    '动态规划',
+    '贪心与构造',
+    '计算几何',
+    '随机化与启发式',
+    '综合与其他算法'
+];
+
+const CATEGORY_API_VALUES = {
+    '基础算法': 'basic',
+    '数据结构': 'data_structure',
+    '图论': 'graph',
+    '字符串': 'string',
+    '数学与数论': 'math',
+    '动态规划': 'dp',
+    '贪心与构造': 'greedy',
+    '计算几何': 'geometry',
+    '随机化与启发式': 'randomized',
+    '综合与其他算法': 'other'
+};
+
+/*
+ * 旧分类写法到 10 大类的兼容映射：
+ * 例如旧数据“数论”会归入“数学与数论”。
+ */
+const LEGACY_CATEGORY_ALIASES = {
+    '数论': '数学与数论',
+    '数学': '数学与数论',
+    '基础': '基础算法',
+    '贪心': '贪心与构造',
+    '构造': '贪心与构造',
+    '几何': '计算几何',
+    'dp': '动态规划',
+    '随机': '随机化与启发式',
+    '随机化': '随机化与启发式',
+    '启发式': '随机化与启发式',
+    '综合': '综合与其他算法',
+    '其他': '综合与其他算法'
+};
+
+const DIFFICULTY_ORDER = {
+    '简单': 1,
+    '中等': 2,
+    '困难': 3
+};
+
+const PAGE_SIZE = 15;
+let currentPage = 1;
+let filteredTotal = 0;
+let overview = {};
+let listRequest = 0;
+let listController = null;
+let exportTemplates = [];
+let selectedCategory = '';
+let editingId = null;
+let currentTemplate = null;
+let selectedExportIds = new Set();
+let exportCategoryOrder = [];
+
+function showToast(message) {
+    const toast = $('#toast');
+
+    toast.textContent = message;
+    toast.classList.add('show');
+
+    clearTimeout(window.__toastTimer);
+
+    window.__toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2800);
+}
+
+function showFormError(message) {
+    $('#formError').textContent = message;
+    $('#formError').classList.add('show');
+}
+
+function clearFormError() {
+    $('#formError').textContent = '';
+    $('#formError').classList.remove('show');
+}
+
+async function requestApi(url, options = {}) {
+    const response = await fetch(url, {
+        credentials: 'same-origin',
+        ...options,
+        headers: {
+            ...(options.body instanceof FormData
+                ? {}
+                : {'Content-Type': 'application/json'}),
+            ...(options.headers || {})
+        }
+    });
+
+    const data = await response.json().catch(() => null);
+
+    return {
+        response,
+        data
+    };
+}
+
+function createTag(text, type = '') {
+    const element = document.createElement('span');
+
+    element.className = `tag ${type}`;
+    element.textContent = text || '未设置';
+
+    return element;
+}
+
+/* 统一处理分类文本 */
+function normalizeCategory(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '');
+}
+
+/*
+ * 把一个分类片段解析到 10 大类：
+ * “数论”→“数学与数论”，“dp”→“动态规划”等。
+ */
+function resolveCategoryPart(part) {
+    const key = normalizeCategory(part);
+
+    if (!key) {
+        return '';
+    }
+
+    const alias = LEGACY_CATEGORY_ALIASES[key];
+
+    if (alias) {
+        return alias;
+    }
+
+    const matched = BOARD_CATEGORIES.find(category => {
+        return normalizeCategory(category) === key;
+    });
+
+    return matched || part;
+}
+
+/*
+ * 与首页相同的分类兼容规则：
+ * “图论 / 最短路”“图论-最短路”等写法，
+ * 点击快速分类“图论”时可以匹配到。
+ */
+function categoryMatches(value, quickCategory) {
+    const target = normalizeCategory(quickCategory);
+
+    if (!target) {
+        return false;
+    }
+
+    const parts = String(value || '')
+        .split(/[\/／>＞|｜·•\-—:：,，]/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    return parts.some(part => {
+        return normalizeCategory(resolveCategoryPart(part)) === target;
+    });
+}
+
+/*
+ * 把旧数据的分类值映射成 10 大类之一，用于编辑回填：
+ * “图论 / 最短路”→“图论”，“数论”→“数学与数论”。
+ * 无法映射时返回空字符串，提示用户重新选择。
+ */
+function resolveCategoryValue(value) {
+    const parts = String(value || '')
+        .split(/[\/／>＞|｜·•\-—:：,，]/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    for (const part of parts) {
+        const resolved = resolveCategoryPart(part);
+
+        if (BOARD_CATEGORIES.includes(resolved)) {
+            return resolved;
+        }
+    }
+
+    return '';
+}
+
+/* 填充创建/编辑模板表单中的“分类”下拉框（固定 10 类） */
+function renderCategorySelect(selectedValue = '') {
+    const select = $('#category');
+
+    select.innerHTML = '';
+
+    const placeholder = document.createElement('option');
+
+    placeholder.value = '';
+    placeholder.textContent = '请选择分类';
+    select.appendChild(placeholder);
+
+    BOARD_CATEGORIES.forEach(category => {
+        const option = document.createElement('option');
+
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+
+    select.value = resolveCategoryValue(selectedValue);
+}
+
+/* 生成“全部模板 + 10 大分类”快速分类按钮 */
+function renderQuickCategories() {
+    const list = $('#categoryList');
+
+    list.innerHTML = '';
+
+    const createButton = (label, category) => {
+        const button = document.createElement('button');
+
+        button.className = 'category-button';
+        button.dataset.category = category;
+        button.textContent = label;
+        button.addEventListener('click', () => {
+            setCategory(category);
+        });
+
+        return button;
+    };
+
+    list.appendChild(createButton('全部模板', ''));
+    BOARD_CATEGORIES.forEach(category => {
+        list.appendChild(createButton(category, category));
+    });
+}
+
+function updateOverview() {
+    $('#totalCount').textContent = overview.allTotal || 0;
+    $('#categoryCount').textContent = (overview.categories || []).length;
+    $('#languageCount').textContent = overview.languageCount || 0;
+    $('#visibleCount').textContent = filteredTotal;
+}
+
+function fillCategoryFilter() {
+    const select = $('#categoryFilter');
+    const selected = select.value;
+    select.innerHTML = '<option value="">全部分类</option>';
+    const categories = [...(overview.categories || [])];
+    // Keep an active filter even if its last matching board was deleted.
+    if (selected && !categories.includes(selected)) categories.push(selected);
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+    select.value = selected;
+}
+
+function setCategory(category) {
+    selectedCategory = category;
+
+    document.querySelectorAll('.category-button').forEach(button => {
+        button.classList.toggle(
+            'active',
+            button.dataset.category === category
+        );
+    });
+
+    applyFilters();
+}
+
+let filterTimer;
+function scheduleFilters() {
+    clearTimeout(filterTimer);
+    ++listRequest;
+    if (listController) listController.abort();
+    $('#pagination').innerHTML = '';
+    $('#templateGrid').innerHTML = '<div class="empty-state">正在搜索模板...</div>';
+    filterTimer = setTimeout(() => loadTemplates(1), 300);
+}
+
+function applyFilters() {
+    return loadTemplates(1);
+}
+
+function renderTemplates(templates) {
+    const grid = $('#templateGrid');
+
+    grid.innerHTML = '';
+    updateOverview(templates);
+
+    $('#resultText').textContent =
+        `共 ${filteredTotal} 个模板，本页显示 ${templates.length} 个`;
+
+    const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+    renderPagination(totalPages);
+
+    if (!templates.length) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <strong>没有找到符合条件的模板</strong>
+                可以更换搜索关键词，或者新建一个模板。
+                <br>
+                <a class="btn" href="/">去公共模板库看看</a>
+            </div>
+        `;
+        return;
+    }
+
+    templates.forEach((template, index) => {
+        const card = document.createElement('article');
+        card.className = 'template-card';
+
+        const cardHead = document.createElement('div');
+        cardHead.className = 'template-card-head';
+
+        const tags = document.createElement('div');
+        tags.className = 'template-tags';
+
+        tags.append(
+            createTag(template.category || '未分类'),
+            createTag(template.difficulty || '未设置', 'difficulty')
+        );
+
+        const number = document.createElement('span');
+        number.className = 'template-number';
+        number.textContent = `#${String((currentPage - 1) * PAGE_SIZE + index + 1).padStart(3, '0')}`;
+
+        cardHead.append(tags, number);
+
+        const title = document.createElement('h3');
+        title.textContent = template.title || '未命名模板';
+
+        const description = document.createElement('p');
+        description.className = 'template-intro';
+        description.textContent =
+            template.description || '这个模板没有填写简介。';
+
+        const code = document.createElement('pre');
+        code.className = 'code-preview';
+        code.textContent = template.code || '// 暂无模板代码';
+
+        const footer = document.createElement('div');
+        footer.className = 'template-card-footer';
+
+        const language = document.createElement('span');
+        language.className = 'template-language';
+        language.textContent = template.language || '未知语言';
+
+        const actions = document.createElement('div');
+        actions.className = 'template-actions';
+
+        const copyButton = document.createElement('button');
+        copyButton.className = 'btn dark small';
+        copyButton.textContent = '复制';
+        copyButton.addEventListener('click', async () => {
+            const copied = await copyCode(template.code || '');
+
+            if (copied) {
+                showToast('模板代码已复制');
+            } else {
+                showToast('复制失败，请手动选择代码');
+            }
+        });
+
+        const editButton = document.createElement('button');
+        editButton.className = 'btn secondary small';
+        editButton.textContent = '编辑';
+        editButton.addEventListener('click', () => {
+            openEditor(template);
+        });
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'btn danger small';
+        deleteButton.textContent = '删除';
+        deleteButton.addEventListener('click', () => {
+            deleteTemplate(template.id);
+        });
+
+        actions.append(copyButton, editButton, deleteButton);
+        footer.append(language, actions);
+
+        const viewButton = document.createElement('button');
+        viewButton.className = 'btn secondary';
+        viewButton.style.position = 'relative';
+        viewButton.style.zIndex = '1';
+        viewButton.style.width = '100%';
+        viewButton.style.marginTop = '13px';
+        viewButton.textContent = '查看完整模板';
+        viewButton.addEventListener('click', () => {
+            openDetail(template.id);
+        });
+
+        card.append(
+            cardHead,
+            title,
+            description,
+            code,
+            footer,
+            viewButton
+        );
+
+        grid.appendChild(card);
+    });
+}
+
+function renderPagination(totalPages) {
+    const wrap = $('#pagination');
+
+    if (!wrap) {
+        return;
+    }
+
+    wrap.innerHTML = '';
+
+    if (totalPages <= 1) {
+        return;
+    }
+
+    const createButton = (label, page, options = {}) => {
+        const button = document.createElement('button');
+
+        button.className = 'page-btn';
+        button.textContent = label;
+        button.disabled = !!options.disabled;
+
+        if (options.active) {
+            button.classList.add('active');
+        }
+
+        button.addEventListener('click', () => {
+            goToPage(page);
+        });
+
+        return button;
+    };
+
+    wrap.appendChild(createButton(
+        '上一页',
+        currentPage - 1,
+        {disabled: currentPage <= 1}
+    ));
+
+    const pageSet = new Set([
+        1,
+        totalPages,
+        currentPage - 1,
+        currentPage,
+        currentPage + 1
+    ]);
+
+    const pages = [...pageSet]
+        .filter(page => page >= 1 && page <= totalPages)
+        .sort((a, b) => a - b);
+
+    let previous = 0;
+
+    pages.forEach(page => {
+        if (page - previous > 1) {
+            const ellipsis = document.createElement('span');
+
+            ellipsis.className = 'page-ellipsis';
+            ellipsis.textContent = '…';
+            wrap.appendChild(ellipsis);
+        }
+
+        wrap.appendChild(createButton(
+            String(page),
+            page,
+            {active: page === currentPage}
+        ));
+
+        previous = page;
+    });
+
+    wrap.appendChild(createButton(
+        '下一页',
+        currentPage + 1,
+        {disabled: currentPage >= totalPages}
+    ));
+
+    const info = document.createElement('span');
+
+    info.className = 'page-info';
+    info.textContent = `第 ${currentPage} / ${totalPages} 页`;
+    wrap.appendChild(info);
+}
+
+function goToPage(page) {
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredTotal / PAGE_SIZE)
+    );
+
+    if (page < 1 || page > totalPages || page === currentPage) {
+        return;
+    }
+
+    loadTemplates(page);
+
+    $('#templateGrid').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
+
+function selectedExportTemplates() {
+    return exportTemplates.filter(template => selectedExportIds.has(String(template.id)));
+}
+
+function syncExportCategoryOrder() {
+    const actualCategories = new Set(
+        selectedExportTemplates()
+            .map(template => resolveCategoryValue(template.category))
+            .filter(category => BOARD_CATEGORIES.includes(category))
+    );
+
+    exportCategoryOrder = exportCategoryOrder.filter(category =>
+        actualCategories.has(category)
+    );
+
+    BOARD_CATEGORIES.forEach(category => {
+        if (actualCategories.has(category) && !exportCategoryOrder.includes(category)) {
+            exportCategoryOrder.push(category);
+        }
+    });
+}
+
+function renderExportCategoryOrder() {
+    const container = $('#exportCategoryOrder');
+    container.innerHTML = '';
+
+    if (!exportCategoryOrder.length) {
+        container.innerHTML = `
+            <p class="export-empty">请先选择至少一个模板。</p>
+        `;
+        return;
+    }
+
+    exportCategoryOrder.forEach((category, index) => {
+        const row = document.createElement('div');
+        row.className = 'export-category-row';
+
+        const name = document.createElement('span');
+        name.textContent = category;
+
+        const actions = document.createElement('div');
+        actions.className = 'export-order-actions';
+
+        const up = document.createElement('button');
+        up.className = 'order-button';
+        up.type = 'button';
+        up.textContent = '↑';
+        up.disabled = index === 0;
+        up.setAttribute('aria-label', `上移 ${category}`);
+        up.addEventListener('click', () => moveExportCategory(index, -1));
+
+        const down = document.createElement('button');
+        down.className = 'order-button';
+        down.type = 'button';
+        down.textContent = '↓';
+        down.disabled = index === exportCategoryOrder.length - 1;
+        down.setAttribute('aria-label', `下移 ${category}`);
+        down.addEventListener('click', () => moveExportCategory(index, 1));
+
+        actions.append(up, down);
+        row.append(name, actions);
+        container.appendChild(row);
+    });
+}
+
+function moveExportCategory(index, direction) {
+    const destination = index + direction;
+    if (destination < 0 || destination >= exportCategoryOrder.length) {
+        return;
+    }
+
+    [exportCategoryOrder[index], exportCategoryOrder[destination]] = [
+        exportCategoryOrder[destination],
+        exportCategoryOrder[index]
+    ];
+    renderExportCategoryOrder();
+}
+
+function renderExportBoards() {
+    const list = $('#exportBoardList');
+    list.innerHTML = '';
+
+    exportTemplates.forEach(template => {
+        const row = document.createElement('label');
+        row.className = 'export-board-row';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = selectedExportIds.has(String(template.id));
+        checkbox.addEventListener('change', () => {
+            const id = String(template.id);
+            if (checkbox.checked) {
+                selectedExportIds.add(id);
+            } else {
+                selectedExportIds.delete(id);
+            }
+            updateExportSelection();
+        });
+
+        const text = document.createElement('span');
+        text.className = 'export-board-text';
+
+        const title = document.createElement('strong');
+        title.textContent = template.title || '未命名模板';
+
+        const meta = document.createElement('small');
+        meta.textContent = `${template.category || '未分类'} · ${template.language || '未知语言'}`;
+
+        text.append(title, meta);
+        row.append(checkbox, text);
+        list.appendChild(row);
+    });
+}
+
+function updateExportSelection() {
+    syncExportCategoryOrder();
+    renderExportBoards();
+    renderExportCategoryOrder();
+
+    const selectedCount = selectedExportIds.size;
+    $('#exportSelectionCount').textContent = `已选择 ${selectedCount} 个模板`;
+    $('#toggleAllExport').textContent =
+        selectedCount === exportTemplates.length && exportTemplates.length ? '取消全选' : '全选';
+}
+
+async function openExportModal() {
+    const button = $('#openExportBtn');
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+        const {response, data} = await requestApi('/api/my/boards');
+        if (response.status === 401) { location.href = '/html/login.html'; return; }
+        if (!response.ok || !Array.isArray(data)) throw new Error('load failed');
+        exportTemplates = data;
+    } catch (_) {
+        showToast('导出列表加载失败，请重试');
+        return;
+    } finally {
+        button.disabled = false;
+    }
+    if (!exportTemplates.length) {
+        showToast('当前没有可导出的模板');
+        return;
+    }
+
+    selectedExportIds = new Set();
+    exportCategoryOrder = [];
+    updateExportSelection();
+    $('#exportModal').classList.add('show');
+    document.body.classList.add('modal-open');
+}
+
+function closeExportModal() {
+    $('#exportModal').classList.remove('show');
+    document.body.classList.remove('modal-open');
+}
+
+async function exportPdf() {
+    const boards = selectedExportTemplates();
+    if (!boards.length) {
+        showToast('请至少选择一个模板');
+        return;
+    }
+
+    if (exportCategoryOrder.length === 0 ||
+        exportCategoryOrder.some(category => !CATEGORY_API_VALUES[category])) {
+        showToast('所选模板包含无法导出的分类');
+        return;
+    }
+
+    const submit = $('#submitExport');
+    submit.disabled = true;
+    submit.textContent = '正在生成…';
+
+    try {
+        const response = await fetch('/api/my/boards/export/pdf', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                board_ids: boards.map(board => Number(board.id)),
+                option: {
+                    cover: $('#exportCover').checked,
+                    table_of_contents: $('#exportToc').checked,
+                    bookmarks: $('#exportBookmarks').checked,
+                    new_page_per_category: $('#exportNewPage').checked
+                },
+                category: exportCategoryOrder.map(category => CATEGORY_API_VALUES[category])
+            })
+        });
+
+        if (response.status === 401) {
+            location.href = '/html/login.html';
+            return;
+        }
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => null);
+            showToast(error?.message || 'PDF 导出失败，请稍后重试');
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'algorithm-hub-boards.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        closeExportModal();
+        showToast('PDF 已开始下载');
+    } catch (_) {
+        showToast('网络异常，PDF 导出失败');
+    } finally {
+        submit.disabled = false;
+        submit.textContent = '下载 PDF';
+    }
+}
+
+async function loadTemplates(page = currentPage) {
+    clearTimeout(filterTimer);
+    const request = ++listRequest;
+    if (listController) listController.abort();
+    listController = new AbortController();
+    $('#templateGrid').innerHTML = '<div class="empty-state">正在加载模板...</div>';
+    $('#pagination').innerHTML = '';
+    $('#resultText').textContent = '正在加载模板...';
+    const options = {
+        page, pageSize: PAGE_SIZE,
+        keyword: $('#searchInput').value.trim().toLowerCase(),
+        category: selectedCategory,
+        language: $('#languageFilter').value,
+        sort: $('#sortFilter').value,
+        exactCategory: $('#categoryFilter').value
+    };
+    try {
+        const {response, data} = await requestApi('/api/my/boards/page', {
+            method: 'POST', body: JSON.stringify(options), signal: listController.signal
+        });
+        if (request !== listRequest) return;
+        if (response.status === 401) { location.href = '/html/login.html'; return; }
+        if (!response.ok || !data || !Array.isArray(data.items)) throw new Error('load failed');
+        currentPage = data.page;
+        filteredTotal = data.total;
+        overview = data;
+        fillCategoryFilter();
+        renderTemplates(data.items);
+    } catch (error) {
+        if (request !== listRequest || error.name === 'AbortError') return;
+        $('#templateGrid').innerHTML = '<div class="empty-state"><strong>模板加载失败</strong>请重试或刷新页面。<button class="btn secondary" id="retryTemplates">重试</button></div>';
+        $('#resultText').textContent = '模板加载失败';
+        $('#retryTemplates').addEventListener('click', () => loadTemplates(page));
+    }
+}
+
+function resetEditor() {
+    $('#templateForm').reset();
+    $('#difficulty').value = '';
+    $('#language').value = '';
+    $('#code').value = '';
+    $('#codeFile').value = '';
+    $('#editorSource').style.display = '';
+    $('#fileSource').style.display = 'none';
+
+    document
+        .querySelector('input[name="codeSource"][value="editor"]')
+        .checked = true;
+
+    clearFormError();
+}
+
+function openEditor(template = null) {
+    editingId = template ? template.id : null;
+    resetEditor();
+
+    /* 每次打开都重建 10 类下拉，并回填选中值 */
+    renderCategorySelect(template ? template.category : '');
+
+    if (template) {
+        $('#modalTitle').textContent = '编辑模板';
+        $('#submitBtn').textContent = '保存修改';
+
+        $('#title').value = template.title || '';
+        $('#difficulty').value = template.difficulty || '';
+        $('#language').value = template.language || '';
+        $('#description').value = template.description || '';
+        $('#code').value = template.code || '';
+    } else {
+        $('#modalTitle').textContent = '新建模板';
+        $('#submitBtn').textContent = '保存模板';
+    }
+
+    $('#editorModal').classList.add('show');
+    document.body.classList.add('modal-open');
+}
+
+function closeEditor() {
+    $('#editorModal').classList.remove('show');
+    document.body.classList.remove('modal-open');
+    editingId = null;
+}
+
+async function openDetail(id) {
+    const {response, data} = await requestApi(
+        `/api/my/boards/${encodeURIComponent(id)}`
+    );
+
+    if (response.status === 401) {
+        location.href = '/html/login.html';
+        return;
+    }
+
+    if (!response.ok || !data) {
+        showToast(data?.message || '模板详情加载失败');
+        return;
+    }
+
+    currentTemplate = data;
+
+    $('#detailTags').innerHTML = '';
+    $('#detailTags').append(
+        createTag(data.category || '未分类'),
+        createTag(data.difficulty || '未设置', 'difficulty'),
+        createTag(data.language || '未知语言', 'language')
+    );
+
+    $('#detailTitle').textContent = data.title || '未命名模板';
+    $('#detailDescription').textContent =
+        data.description || '这个模板没有填写简介。';
+    $('#detailCode').textContent =
+        data.code || '// 暂无模板代码';
+
+    $('#detailModal').classList.add('show');
+    document.body.classList.add('modal-open');
+}
+
+function closeDetail() {
+    $('#detailModal').classList.remove('show');
+    document.body.classList.remove('modal-open');
+    currentTemplate = null;
+}
+
+async function deleteTemplate(id) {
+    if (!confirm('确定删除这个模板吗？删除后无法恢复。')) {
+        return;
+    }
+
+    const {response, data} = await requestApi(
+        `/api/my/boards/${encodeURIComponent(id)}`,
+        {method: 'DELETE'}
+    );
+
+    if (response.status === 401) {
+        location.href = '/html/login.html';
+        return;
+    }
+
+    if (!response.ok) {
+        showToast(data?.message || '删除模板失败');
+        return;
+    }
+
+    showToast('模板已删除');
+    await loadTemplates();
+}
+
+async function copyCode(code) {
+    if (!code) {
+        return false;
+    }
+
+    try {
+        if (navigator.clipboard &&
+            typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(code);
+            return true;
+        }
+    } catch (_) {}
+
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    let copied = false;
+
+    try {
+        copied = document.execCommand('copy');
+    } catch (_) {
+        copied = false;
+    }
+
+    textarea.remove();
+    return copied;
+}
+
+$('#templateForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    clearFormError();
+
+    const source = document.querySelector(
+        'input[name="codeSource"]:checked'
+    ).value;
+
+    const file = $('#codeFile').files[0];
+
+    if (source === 'file' && !file) {
+        showFormError('请选择一个代码文件。');
+        return;
+    }
+
+    if (source === 'editor' && !$('#code').value.trim()) {
+        showFormError('请输入模板代码。');
+        return;
+    }
+
+    const category = $('#category').value;
+
+    if (!category) {
+        showFormError('请选择分类。');
+        return;
+    }
+
+    const fields = {
+        title: $('#title').value.trim(),
+        category,
+        difficulty: $('#difficulty').value,
+        description: $('#description').value.trim(),
+        language: $('#language').value
+    };
+
+    let body;
+    let headers = {};
+
+    if (source === 'file') {
+        body = new FormData();
+
+        Object.entries(fields).forEach(([key, value]) => {
+            body.append(key, value);
+        });
+
+        /*
+         * 后端会读取 multipart 中带 filename 的字段，
+         * 并把文件内容写入 code 属性。
+         */
+        body.append('code', file, file.name);
+    } else {
+        body = JSON.stringify({
+            ...fields,
+            code: $('#code').value
+        });
+
+        headers['Content-Type'] = 'application/json';
+    }
+
+    const url = editingId
+        ? `/api/my/boards/${encodeURIComponent(editingId)}`
+        : '/api/my/boards';
+
+    let result;
+    try {
+        result = await requestApi(url, {
+            method: editingId ? 'PUT' : 'POST',
+            body,
+            headers
+        });
+    } catch (_) {
+        showFormError('网络连接中断，保存结果尚未确认。请恢复连接后刷新列表确认是否已保存，再决定是否重试。');
+        return;
+    }
+    const {response, data} = result;
+
+    if (response.status === 401) {
+        location.href = '/html/login.html';
+        return;
+    }
+
+    if (!response.ok) {
+        showFormError(data?.message || '保存失败，请检查填写内容。');
+        return;
+    }
+
+    closeEditor();
+    showToast(editingId ? '模板修改成功' : '模板创建成功');
+    await loadTemplates();
+});
+
+document.querySelectorAll('input[name="codeSource"]').forEach(input => {
+    input.addEventListener('change', () => {
+        const fileMode = input.checked && input.value === 'file';
+
+        $('#editorSource').style.display = fileMode ? 'none' : '';
+        $('#fileSource').style.display = fileMode ? '' : 'none';
+    });
+});
+
+$('#searchInput').addEventListener('input', scheduleFilters);
+$('#categoryFilter').addEventListener('change', applyFilters);
+$('#languageFilter').addEventListener('change', applyFilters);
+$('#sortFilter').addEventListener('change', applyFilters);
+
+$('#resetFilter').addEventListener('click', () => {
+    selectedCategory = '';
+    $('#searchInput').value = '';
+    $('#categoryFilter').value = '';
+    $('#languageFilter').value = '';
+    $('#sortFilter').value = 'newest';
+
+    document.querySelectorAll('.category-button').forEach(button => {
+        button.classList.toggle(
+            'active',
+            button.dataset.category === ''
+        );
+    });
+
+    applyFilters();
+});
+
+$('#newTemplateBtn').addEventListener('click', () => {
+    openEditor(null);
+});
+
+$('#openExportBtn').addEventListener('click', openExportModal);
+$('#closeExport').addEventListener('click', closeExportModal);
+$('#cancelExport').addEventListener('click', closeExportModal);
+$('#submitExport').addEventListener('click', exportPdf);
+
+$('#toggleAllExport').addEventListener('click', () => {
+    const allSelected = exportTemplates.length > 0 &&
+        selectedExportIds.size === exportTemplates.length;
+
+    selectedExportIds = allSelected
+        ? new Set()
+        : new Set(exportTemplates.map(template => String(template.id)));
+    updateExportSelection();
+});
+
+$('#exportModal').addEventListener('click', event => {
+    if (event.target === $('#exportModal')) {
+        closeExportModal();
+    }
+});
+
+$('#closeEditor').addEventListener('click', closeEditor);
+$('#cancelEditor').addEventListener('click', closeEditor);
+
+$('#editorModal').addEventListener('click', event => {
+    if (event.target === $('#editorModal')) {
+        closeEditor();
+    }
+});
+
+$('#closeDetail').addEventListener('click', closeDetail);
+
+$('#detailModal').addEventListener('click', event => {
+    if (event.target === $('#detailModal')) {
+        closeDetail();
+    }
+});
+
+$('#detailCopy').addEventListener('click', async () => {
+    if (!currentTemplate) {
+        return;
+    }
+
+    const copied = await copyCode(currentTemplate.code || '');
+
+    if (copied) {
+        showToast('模板代码已复制');
+    } else {
+        showToast('复制失败，请手动选择代码');
+    }
+});
+
+$('#detailEdit').addEventListener('click', () => {
+    if (!currentTemplate) {
+        return;
+    }
+
+    closeDetail();
+    openEditor(currentTemplate);
+});
+
+$('#detailDelete').addEventListener('click', async () => {
+    if (!currentTemplate) {
+        return;
+    }
+
+    const id = currentTemplate.id;
+
+    closeDetail();
+    await deleteTemplate(id);
+});
+
+$('#logoutBtn').addEventListener('click', async () => {
+    const {response} = await requestApi('/api/logout', {
+        method: 'POST'
+    });
+
+    if (response.ok) {
+        location.href = '/';
+    } else {
+        showToast('退出登录失败');
+    }
+});
+
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+        closeEditor();
+        closeDetail();
+        closeExportModal();
+    }
+});
+
+renderQuickCategories();
+
+(async function init() {
+    const {response} = await requestApi('/api/me');
+
+    if (!response.ok) {
+        location.href = '/html/login.html';
+        return;
+    }
+
+    await loadTemplates();
+})();
+</script>
+
+</body>
+</html>

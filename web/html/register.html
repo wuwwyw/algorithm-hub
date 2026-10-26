@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 · Algorithm Hub</title>
+    <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="navbar">
+        <a class="brand" href="/">
+            <span class="brand-symbol"><span>A</span></span>
+            <span>Algorithm Hub</span>
+        </a>
+
+        <div class="nav-actions">
+            <a class="nav-link" href="/">返回模板库</a>
+            <a class="nav-button" href="/html/login.html">登录</a>
+        </div>
+    </div>
+</header>
+
+<main class="auth-layout">
+    <aside class="auth-showcase" aria-hidden="true">
+        <div class="showcase-window">
+            <div class="window-toolbar">
+                <i></i>
+                <i></i>
+                <i></i>
+            </div>
+
+            <div class="window-content">
+                <div class="window-label">MY TEMPLATE LIBRARY</div>
+
+                <div class="window-title">
+                    建立你自己的<br>
+                    算法模板库。
+                </div>
+
+                <div class="window-code">
+                    <span class="syntax-purple">template</span>&lt;
+                    <span class="syntax-purple">typename</span> T&gt;<br>
+                    T <span class="syntax-green">fast_pow</span>(T a, T b) {<br>
+                    &nbsp;&nbsp;T res = <span class="syntax-orange">1</span>;<br>
+                    &nbsp;&nbsp;<span class="syntax-purple">while</span> (b) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="syntax-purple">if</span> (b &amp; <span class="syntax-orange">1</span>)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res = res * a;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;a = a * a;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;b &gt;&gt;= <span class="syntax-orange">1</span>;<br>
+                    &nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;<span class="syntax-purple">return</span> res;<br>
+                    }
+                </div>
+
+                <div class="window-footer">
+                    <span>模板库已准备就绪</span>
+                    <span class="window-language">C++ · 数论</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <section class="auth-panel">
+        <span class="eyebrow">Create account</span>
+
+        <h1>创建你的账户</h1>
+
+        <p class="auth-subtitle">
+            注册后即可创建和管理自己的算法模板，
+            也可以把公共模板添加到自己的模板库。
+        </p>
+
+        <div class="form-error" id="formError"></div>
+
+        <form id="registerForm">
+            <div class="field">
+                <label for="username">用户名</label>
+                <input id="username"
+                       name="username"
+                       maxlength="64"
+                       autocomplete="username"
+                       placeholder="输入你的用户名"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="password">密码</label>
+                <div class="input-wrap">
+                    <input id="password"
+                           name="password"
+                           type="password"
+                           minlength="6"
+                           maxlength="128"
+                           autocomplete="new-password"
+                           placeholder="至少 6 位字符"
+                           required>
+                    <button type="button"
+                            class="password-toggle"
+                            data-target="password">
+                        显示
+                    </button>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="confirmPassword">确认密码</label>
+                <div class="input-wrap">
+                    <input id="confirmPassword"
+                           name="confirmPassword"
+                           type="password"
+                           minlength="6"
+                           maxlength="128"
+                           autocomplete="new-password"
+                           placeholder="再次输入密码"
+                           required>
+                    <button type="button"
+                            class="password-toggle"
+                            data-target="confirmPassword">
+                        显示
+                    </button>
+                </div>
+            </div>
+
+            <button class="submit-button" type="submit">
+                创建账户
+            </button>
+        </form>
+
+        <div class="auth-foot">
+            已经有账户？
+            <a href="/html/login.html">直接登录</a>
+        </div>
+    </section>
+</main>
+
+<script>
+const form = document.querySelector('#registerForm');
+const errorBox = document.querySelector('#formError');
+
+function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.add('show');
+}
+
+function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+}
+
+document.querySelectorAll('.password-toggle').forEach(button => {
+    button.addEventListener('click', () => {
+        const input = document.getElementById(button.dataset.target);
+        const visible = input.type === 'text';
+
+        input.type = visible ? 'password' : 'text';
+        button.textContent = visible ? '显示' : '隐藏';
+    });
+});
+
+form.addEventListener('submit', async event => {
+    event.preventDefault();
+    clearError();
+
+    if (form.password.value !== form.confirmPassword.value) {
+        showError('两次输入的密码不一致。');
+        return;
+    }
+
+    const payload = {
+        username: form.username.value.trim(),
+        password: form.password.value
+    };
+
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            showError(data?.message || '注册失败，请检查输入内容。');
+            return;
+        }
+
+        location.href = '/html/login.html';
+    } catch (_) {
+        showError('当前无法连接服务器，请稍后重试。');
+    }
+});
+</script>
+
+</body>
+</html>

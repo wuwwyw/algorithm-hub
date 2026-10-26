@@ -1,0 +1,24 @@
+.env
+.env.*
+!.env.example
+build/
+build-*/
+output/
+__pycache__/
+*.pyc
+core
+core.*
+algorithm_hub.sql
+
+# IDE and local workspace
+.idea/
+.vscode/
+
+# Python generated files
+*.py[cod]
+
+# Windows Zone.Identifier sidecar files
+*:Zone.Identifier
+
+# CMake build directories
+cmake-build-*/

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 · Algorithm Hub</title>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+
+<header class="site-header">
+    <div class="navbar">
+        <a class="brand" href="/">
+            <span class="brand-symbol"><span>A</span></span>
+            <span>Algorithm Hub</span>
+        </a>
+
+        <div class="nav-actions">
+            <a class="nav-link" href="/">返回模板库</a>
+            <a class="nav-button" href="/html/register.html">免费注册</a>
+        </div>
+    </div>
+</header>
+
+<main class="auth-layout">
+    <section class="auth-panel">
+        <span class="eyebrow">Welcome back</span>
+
+        <h1>登录你的账户</h1>
+
+        <p class="auth-subtitle">
+            登录后即可管理自己的算法模板库，
+            查看、复制和添加常用算法板子。
+        </p>
+
+        <div class="form-error" id="formError"></div>
+
+        <form id="loginForm">
+            <div class="field">
+                <label for="username">用户名</label>
+                <input id="username"
+                       name="username"
+                       maxlength="64"
+                       autocomplete="username"
+                       placeholder="输入你的用户名"
+                       required>
+            </div>
+
+            <div class="field">
+                <label for="password">密码</label>
+                <div class="input-wrap">
+                    <input id="password"
+                           name="password"
+                           type="password"
+                           minlength="6"
+                           maxlength="128"
+                           autocomplete="current-password"
+                           placeholder="输入你的密码"
+                           required>
+                    <button type="button"
+                            class="password-toggle"
+                            id="passwordToggle">
+                        显示
+                    </button>
+                </div>
+            </div>
+
+            <button class="submit-button" type="submit">
+                登录账户
+            </button>
+        </form>
+
+        <div class="auth-foot">
+            还没有账户？
+            <a href="/html/register.html">创建一个新账户</a>
+        </div>
+    </section>
+
+    <aside class="auth-showcase" aria-hidden="true">
+        <div class="showcase-window">
+            <div class="window-toolbar">
+                <i></i>
+                <i></i>
+                <i></i>
+            </div>
+
+            <div class="window-content">
+                <div class="window-label">MY TEMPLATE LIBRARY</div>
+
+                <div class="window-title">
+                    你的算法模板，<br>
+                    随时回来使用。
+                </div>
+
+                <div class="window-code">
+                    <span class="syntax-purple">template</span>&lt;
+                    <span class="syntax-purple">typename</span> T&gt;<br>
+                    T <span class="syntax-green">fast_pow</span>(T a, T b) {<br>
+                    &nbsp;&nbsp;T res = <span class="syntax-orange">1</span>;<br>
+                    &nbsp;&nbsp;<span class="syntax-purple">while</span> (b) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="syntax-purple">if</span> (b &amp; <span class="syntax-orange">1</span>)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res = res * a;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;a = a * a;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;b &gt;&gt;= <span class="syntax-orange">1</span>;<br>
+                    &nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;<span class="syntax-purple">return</span> res;<br>
+                    }
+                </div>
+
+                <div class="window-footer">
+                    <span>模板库已准备就绪</span>
+                    <span class="window-language">C++ · 数论</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+</main>
+
+<script>
+const form = document.querySelector('#loginForm');
+const errorBox = document.querySelector('#formError');
+const password = document.querySelector('#password');
+const passwordToggle = document.querySelector('#passwordToggle');
+
+function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.add('show');
+}
+
+function clearError() {
+    errorBox.textContent = '';
+    errorBox.classList.remove('show');
+}
+
+passwordToggle.addEventListener('click', () => {
+    const visible = password.type === 'text';
+
+    password.type = visible ? 'password' : 'text';
+    passwordToggle.textContent = visible ? '显示' : '隐藏';
+});
+
+form.addEventListener('submit', async event => {
+    event.preventDefault();
+    clearError();
+
+    const payload = {
+        username: form.username.value.trim(),
+        password: form.password.value
+    };
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            showError(data?.message || '登录失败，请检查用户名和密码。');
+            return;
+        }
+
+        location.href = '/html/my-boards.html';
+    } catch (_) {
+        showError('当前无法连接服务器，请稍后重试。');
+    }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+[Unit]
+Description=Algorithm Hub HTTP Server
+Wants=mysql.service redis-server.service
+After=network.target mysql.service redis-server.service
+
+[Service]
+Type=exec
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/algorithm
+Environment=ALGORITHM_CONFIG_FILE=/home/ubuntu/algorithm/.env
+ExecStartPre=/home/ubuntu/algorithm/build-cloud/algorithm_hub --check-config
+ExecStart=/home/ubuntu/algorithm/build-cloud/algorithm_hub
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=8192
+LimitCORE=0
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=algorithm-hub
+
+[Install]
+WantedBy=multi-user.target
