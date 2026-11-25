@@ -81,7 +81,6 @@ public:
         }
         
         _htp._body = _in_buffur.substr(0, _required_size);
-        // Consume even rejected bodies so keep-alive can parse the next request.
         _in_buffur.erase(0, _required_size);
         if (!get_body()) {
             _htr = Http_response(400, "Bad Request",

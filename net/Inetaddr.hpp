@@ -39,6 +39,6 @@ public:
 private:
     uint16_t _port;
     std::string _ip;
-    struct sockaddr_in _addr;
-    socklen_t _len;
+    struct sockaddr_in _addr{};
+    socklen_t _len = sizeof(_addr);
 };
